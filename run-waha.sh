@@ -67,8 +67,8 @@ fi
 echo "Creating new WAHA container... host=${HOST_PORT}"
 
 docker run -d \
+  --network=host \
   -v "$(pwd)/${SESSIONS_PATH}:/app/.sessions" \
-  -p "${HOST_PORT}:${CONTAINER_PORT}" \
   --name "${CONTAINER_NAME}" \
   -e "WAHA_API_KEY=${WAHA_API_KEY}" \
   -e "WAHA_API_KEY_PLAIN=${WAHA_API_KEY_PLAIN}" \
