@@ -34,6 +34,15 @@ if docker ps -a --format 'table {{.Names}}' | grep -q "^${CONTAINER_NAME}$"; the
     echo "Previous container removed successfully."
 fi
 
+echo "Pulling latest WAHA image..."
+docker pull devlikeapro/waha
+
+if [ $? -eq 0 ]; then
+    echo "Image pulled successfully!"
+else
+    echo "Warning: Failed to pull latest image. Using cached version..."
+fi
+
 echo "Creating new WAHA container..."
 
 docker run -d \
