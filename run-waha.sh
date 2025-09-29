@@ -76,6 +76,7 @@ docker run -d \
   -e "WAHA_DASHBOARD_USERNAME=${WAHA_DASHBOARD_USERNAME}" \
   -e "WAHA_DASHBOARD_PASSWORD=${WAHA_DASHBOARD_PASSWORD}" \
   -e "REDIS_URL=${REDIS_URL}" \
+  -e "WHATSAPP_DEFAULT_ENGINE=WEBJS" \
   devlikeapro/waha
 
 if [ $? -eq 0 ]; then
