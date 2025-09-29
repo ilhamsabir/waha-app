@@ -42,7 +42,11 @@ cleanup_containers() {
     print_status "Checking for existing containers..."
 
     # Stop and remove any running WAHA containers
-    local containers=("${CONTAINER_NAME:-waha}" "${CONTAINER_NAME:-waha}-network" "${CONTAINER_NAME:-waha}-redis")
+    local containers=(
+        "${CONTAINER_NAME:-waha}"
+        "${CONTAINER_NAME:-waha}-network"
+        "${CONTAINER_NAME:-waha}-redis"
+    )
 
     for container in "${containers[@]}"; do
         if docker ps -a --format 'table {{.Names}}' | grep -q "^${container}$"; then
