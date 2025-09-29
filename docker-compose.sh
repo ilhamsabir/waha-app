@@ -62,6 +62,7 @@ cleanup_containers() {
     fi
 
     print_status "Container cleanup completed"
+}
 
 # Help
 show_help() {
