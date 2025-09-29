@@ -22,10 +22,17 @@ if [ ! -f .env ]; then
 	exit 1
 fi
 
-# Load env vars
-set -a
-. .env
-set +a
+# Check if .env file exists
+if [ ! -f .env ]; then
+	print_error ".env file not found!"
+	echo "Please create .env file with required configuration."
+	echo "You can copy from .env.example:"
+	echo "cp .env.example .env"
+	exit 1
+fi
+
+# Load environment variables from .env file
+export $(grep -v '^#' .env | grep -v '^$' | xargs)
 
 # Cleanup containers
 cleanup_containers() {
