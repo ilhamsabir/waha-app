@@ -95,20 +95,6 @@ case "${1:-help}" in
 		fi
 		;;
 
-	"up-dev")
-		print_status "Starting WAHA services (Development mode)..."
-		docker compose up -d waha-dev redis
-		if [ $? -eq 0 ]; then
-			print_status "WAHA (Dev) started successfully!"
-			print_info "Dashboard: http://localhost:${HOST_PORT:-3000}"
-			print_info "Username: ${WAHA_DASHBOARD_USERNAME:-admin}"
-			print_info "Password: ${WAHA_DASHBOARD_PASSWORD:-admin}"
-		else
-			print_error "Failed to start WAHA development services"
-			exit 1
-		fi
-		;;
-
 	"up-redis")
 		print_status "Starting Redis service only..."
 		docker compose up -d redis
