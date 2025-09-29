@@ -37,6 +37,32 @@ fi
 # Load environment variables
 export $(grep -v '^#' .env | grep -v '^$' | xargs)
 
+# Function to cleanup existing containers
+cleanup_containers() {
+    print_status "Checking for existing containers..."
+
+    # Stop and remove any running WAHA containers
+    local containers=("${CONTAINER_NAME:-waha}" "${CONTAINER_NAME:-waha}-network" "${CONTAINER_NAME:-waha}-redis")
+
+    for container in "${containers[@]}"; do
+        if docker ps -a --format 'table {{.Names}}' | grep -q "^${container}$"; then
+            print_warning "Found existing container '${container}'. Removing..."
+            docker stop "$container" 2>/dev/null || true
+            docker rm "$container" 2>/dev/null || true
+        fi
+    done
+
+    # Also check for containers using port 3000
+    local port_containers=$(docker ps --format 'table {{.Names}}\t{{.Ports}}' | grep ':3000->' | awk '{print $1}' || true)
+    if [ -n "$port_containers" ]; then
+        print_warning "Found containers using port 3000: $port_containers"
+        echo "$port_containers" | xargs -r docker stop 2>/dev/null || true
+        echo "$port_containers" | xargs -r docker rm 2>/dev/null || true
+    fi
+
+    print_status "Container cleanup completed"
+}
+
 # Function to show usage
 show_help() {
 	echo "WAHA Docker Compose Management Script"
@@ -46,9 +72,9 @@ show_help() {
 	echo "Commands:"
 	echo "  up              Start WAHA with internal Redis (recommended)"
 	echo "  up-host         Start WAHA with host network (for external Redis)"
-	echo "  up-dev          Start WAHA services (development mode)"
 	echo "  up-redis        Start only Redis service"
 	echo "  down            Stop and remove all services"
+	echo "  clean           Clean up existing containers (run this if port conflicts occur)"
 	echo "  restart         Restart all services"
 	echo "  logs            Show logs from all services"
 	echo "  logs-waha       Show logs from WAHA service only"
@@ -59,7 +85,8 @@ show_help() {
 	echo "  help            Show this help message"
 	echo ""
 	echo "Examples:"
-	echo "  $0 up                    # Start production services"
+	echo "  $0 up                    # Start services with internal Redis"
+	echo "  $0 up-host               # Start services with external Redis"
 	echo "  $0 logs -f               # Follow logs in real-time"
 	echo "  $0 down                  # Stop all services"
 }
@@ -67,6 +94,7 @@ show_help() {
 # Main command handling
 case "${1:-help}" in
 	"up")
+		cleanup_containers
 		print_status "Starting WAHA services with internal Redis..."
 		docker compose up -d waha-network redis
 		if [ $? -eq 0 ]; then
@@ -81,6 +109,7 @@ case "${1:-help}" in
 		;;
 
 	"up-host")
+		cleanup_containers
 		print_status "Starting WAHA services with host network (for external Redis)..."
 		docker compose --profile production up -d waha redis
 		if [ $? -eq 0 ]; then
@@ -96,6 +125,7 @@ case "${1:-help}" in
 		;;
 
 	"up-redis")
+		cleanup_containers
 		print_status "Starting Redis service only..."
 		docker compose up -d redis
 		if [ $? -eq 0 ]; then
@@ -141,6 +171,11 @@ case "${1:-help}" in
 	"pull")
 		print_status "Pulling latest images..."
 		docker compose pull
+		;;
+
+	"clean")
+		cleanup_containers
+		print_status "Manual cleanup completed"
 		;;
 
 	"cleanup")
