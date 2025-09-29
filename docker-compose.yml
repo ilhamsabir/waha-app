@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  waha:
+    image: devlikeapro/waha
+    container_name: ${CONTAINER_NAME:-waha}
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - WAHA_API_KEY=${WAHA_API_KEY}
+      - WAHA_API_KEY_PLAIN=${WAHA_API_KEY_PLAIN}
+      - WAHA_APPS_ENABLED=${WAHA_APPS_ENABLED:-true}
+      - WAHA_DASHBOARD_USERNAME=${WAHA_DASHBOARD_USERNAME:-admin}
+      - WAHA_DASHBOARD_PASSWORD=${WAHA_DASHBOARD_PASSWORD:-admin}
+      - WHATSAPP_DEFAULT_ENGINE=WEBJS
+      - REDIS_URL=${REDIS_URL}
+    volumes:
+      - ./sessions:/app/.sessions
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      - redis
+    profiles:
+      - production
+
+  redis:
+    image: redis:7-alpine
+    container_name: ${CONTAINER_NAME:-waha}-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-defaultpassword}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - production
+      - redis
+
+  # Development version with port mapping instead of host network
+  waha-dev:
+    image: devlikeapro/waha
+    container_name: ${CONTAINER_NAME:-waha}-dev
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-3000}:${CONTAINER_PORT:-3000}"
+    environment:
+      - WAHA_API_KEY=${WAHA_API_KEY}
+      - WAHA_API_KEY_PLAIN=${WAHA_API_KEY_PLAIN}
+      - WAHA_APPS_ENABLED=${WAHA_APPS_ENABLED:-true}
+      - WAHA_DASHBOARD_USERNAME=${WAHA_DASHBOARD_USERNAME:-admin}
+      - WAHA_DASHBOARD_PASSWORD=${WAHA_DASHBOARD_PASSWORD:-admin}
+      - WHATSAPP_DEFAULT_ENGINE=WEBJS
+      - REDIS_URL=redis://default:${REDIS_PASSWORD:-defaultpassword}@redis:6379
+    volumes:
+      - ./sessions:/app/.sessions
+    depends_on:
+      redis:
+        condition: service_healthy
+    profiles:
+      - development
+
+volumes:
+  redis_data:
+    driver: local
