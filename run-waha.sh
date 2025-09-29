@@ -11,12 +11,25 @@ if [ ! -f .env ]; then
 fi
 
 # Load environment variables from .env file
-set -a  # automatically export all variables
-source .env
-set +a
+export $(grep -v '^#' .env | grep -v '^$' | xargs)
 
 echo "Starting WAHA container..."
 echo "Loading configuration from .env file..."
+
+# Validate required environment variables
+if [ -z "$CONTAINER_NAME" ] || [ -z "$HOST_PORT" ] || [ -z "$WAHA_API_KEY" ]; then
+    echo "Error: Missing required environment variables!"
+    echo "Please check your .env file contains:"
+    echo "- CONTAINER_NAME"
+    echo "- HOST_PORT"
+    echo "- WAHA_API_KEY"
+    echo "- WAHA_API_KEY_PLAIN"
+    echo "- WAHA_DASHBOARD_USERNAME"
+    echo "- WAHA_DASHBOARD_PASSWORD"
+    exit 1
+fi
+
+echo "Configuration loaded successfully!"
 
 # Check if container already exists and stop/remove it
 if docker ps -a --format 'table {{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
@@ -43,17 +56,17 @@ else
     echo "Warning: Failed to pull latest image. Using cached version..."
 fi
 
-echo "Creating new WAHA container... ${HOST_PORT}"
+echo "Creating new WAHA container... host=${HOST_PORT}"
 
 docker run -d \
-  -v $(pwd)/${SESSIONS_PATH}:/app/.sessions \
-  -p ${HOST_PORT:-3000}:${CONTAINER_PORT:-3000} \
-  --name ${CONTAINER_NAME} \
-  -e WAHA_API_KEY=${WAHA_API_KEY} \
-  -e WAHA_API_KEY_PLAIN=${WAHA_API_KEY_PLAIN} \
-  -e WAHA_APPS_ENABLED=${WAHA_APPS_ENABLED} \
-  -e WAHA_DASHBOARD_USERNAME=${WAHA_DASHBOARD_USERNAME} \
-  -e WAHA_DASHBOARD_PASSWORD=${WAHA_DASHBOARD_PASSWORD} \
+  -v "$(pwd)/${SESSIONS_PATH}:/app/.sessions" \
+  -p "${HOST_PORT}:${CONTAINER_PORT}" \
+  --name "${CONTAINER_NAME}" \
+  -e "WAHA_API_KEY=${WAHA_API_KEY}" \
+  -e "WAHA_API_KEY_PLAIN=${WAHA_API_KEY_PLAIN}" \
+  -e "WAHA_APPS_ENABLED=${WAHA_APPS_ENABLED}" \
+  -e "WAHA_DASHBOARD_USERNAME=${WAHA_DASHBOARD_USERNAME}" \
+  -e "WAHA_DASHBOARD_PASSWORD=${WAHA_DASHBOARD_PASSWORD}" \
   devlikeapro/waha
 
 if [ $? -eq 0 ]; then
