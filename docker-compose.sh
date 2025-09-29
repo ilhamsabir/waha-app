@@ -44,7 +44,9 @@ show_help() {
 	echo "Usage: $0 [COMMAND] [OPTIONS]"
 	echo ""
 	echo "Commands:"
-	echo "  up              Start WAHA services (production mode with host network)"
+	echo "  up              Start WAHA with internal Redis (recommended)"
+	echo "  up-host         Start WAHA with host network (for external Redis)"
+	echo "  up-dev          Start WAHA services (development mode)"
 	echo "  up-redis        Start only Redis service"
 	echo "  down            Stop and remove all services"
 	echo "  restart         Restart all services"
@@ -65,8 +67,8 @@ show_help() {
 # Main command handling
 case "${1:-help}" in
 	"up")
-		print_status "Starting WAHA services (Production mode)..."
-		docker compose up -d waha redis
+		print_status "Starting WAHA services with internal Redis..."
+		docker compose up -d waha-network redis
 		if [ $? -eq 0 ]; then
 			print_status "WAHA started successfully!"
 			print_info "Dashboard: http://localhost:${HOST_PORT:-3000}"
@@ -74,6 +76,35 @@ case "${1:-help}" in
 			print_info "Password: ${WAHA_DASHBOARD_PASSWORD:-admin}"
 		else
 			print_error "Failed to start WAHA services"
+			exit 1
+		fi
+		;;
+
+	"up-host")
+		print_status "Starting WAHA services with host network (for external Redis)..."
+		docker compose --profile production up -d waha redis
+		if [ $? -eq 0 ]; then
+			print_status "WAHA (Host Network) started successfully!"
+			print_info "Dashboard: http://localhost:${HOST_PORT:-3000}"
+			print_info "Username: ${WAHA_DASHBOARD_USERNAME:-admin}"
+			print_info "Password: ${WAHA_DASHBOARD_PASSWORD:-admin}"
+			print_warning "Make sure external Redis is running on localhost:6379"
+		else
+			print_error "Failed to start WAHA host services"
+			exit 1
+		fi
+		;;
+
+	"up-dev")
+		print_status "Starting WAHA services (Development mode)..."
+		docker compose up -d waha-dev redis
+		if [ $? -eq 0 ]; then
+			print_status "WAHA (Dev) started successfully!"
+			print_info "Dashboard: http://localhost:${HOST_PORT:-3000}"
+			print_info "Username: ${WAHA_DASHBOARD_USERNAME:-admin}"
+			print_info "Password: ${WAHA_DASHBOARD_PASSWORD:-admin}"
+		else
+			print_error "Failed to start WAHA development services"
 			exit 1
 		fi
 		;;
