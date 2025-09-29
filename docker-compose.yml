@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   waha:
     image: devlikeapro/waha
@@ -24,8 +22,6 @@ services:
       start_period: 40s
     depends_on:
       - redis
-    profiles:
-      - production
 
   redis:
     image: redis:7-alpine
@@ -41,9 +37,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    profiles:
-      - production
-      - redis
 
   # Development version with port mapping instead of host network
   waha-dev:

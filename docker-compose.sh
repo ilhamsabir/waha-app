@@ -68,7 +68,7 @@ show_help() {
 case "${1:-help}" in
     "up")
         print_status "Starting WAHA services (Production mode)..."
-        docker-compose --profile production up -d
+        docker-compose up -d waha redis
         if [ $? -eq 0 ]; then
             print_status "WAHA started successfully!"
             print_info "Dashboard: http://localhost:${HOST_PORT:-3000}"
@@ -82,7 +82,7 @@ case "${1:-help}" in
 
     "up-dev")
         print_status "Starting WAHA services (Development mode)..."
-        docker-compose --profile development up -d
+        docker-compose up -d waha-dev redis
         if [ $? -eq 0 ]; then
             print_status "WAHA (Dev) started successfully!"
             print_info "Dashboard: http://localhost:${HOST_PORT:-3000}"
@@ -96,7 +96,7 @@ case "${1:-help}" in
 
     "up-redis")
         print_status "Starting Redis service only..."
-        docker-compose --profile redis up -d redis
+        docker-compose up -d redis
         if [ $? -eq 0 ]; then
             print_status "Redis started successfully!"
         else
@@ -107,13 +107,13 @@ case "${1:-help}" in
 
     "down")
         print_status "Stopping WAHA services..."
-        docker-compose --profile production --profile development down
+        docker-compose down
         print_status "All services stopped"
         ;;
 
     "restart")
         print_status "Restarting WAHA services..."
-        docker-compose --profile production --profile development restart
+        docker-compose restart
         print_status "Services restarted"
         ;;
 
@@ -148,7 +148,7 @@ case "${1:-help}" in
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             print_status "Cleaning up..."
-            docker-compose --profile production --profile development down -v --remove-orphans
+            docker-compose down -v --remove-orphans
             docker system prune -f
             print_status "Cleanup completed"
         else
