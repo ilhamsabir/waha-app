@@ -15,54 +15,47 @@ print_warning()  { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 print_error()    { echo -e "${RED}[ERROR]${NC} $1"; }
 print_info()     { echo -e "${BLUE}[DEBUG]${NC} $1"; }
 
-# Check for .env
-if [ ! -f .env ]; then
-	print_error ".env file not found!"
-	echo "Please create .env file with required configuration."
-	exit 1
-fi
-
 # Check if .env file exists
 if [ ! -f .env ]; then
-	print_error ".env file not found!"
-	echo "Please create .env file with required configuration."
-	echo "You can copy from .env.example:"
-	echo "cp .env.example .env"
-	exit 1
+    print_error ".env file not found!"
+    echo "Please create .env file with required configuration."
+    echo "You can copy from .env.example:"
+    echo "cp .env.example .env"
+    exit 1
 fi
 
 # Load environment variables from .env file
 export $(grep -v '^#' .env | grep -v '^$' | xargs)
 
-# Cleanup containers
+# Cleanup containers function
 cleanup_containers() {
-	print_status "Checking for existing containers..."
+    print_status "Checking for existing containers..."
 
-	local containers=(
-		"${CONTAINER_NAME:-waha}"
-		"${CONTAINER_NAME:-waha}-network"
-		"${CONTAINER_NAME:-waha}-redis"
-	)
+    local containers=(
+        "${CONTAINER_NAME:-waha}"
+        "${CONTAINER_NAME:-waha}-network"
+        "${CONTAINER_NAME:-waha}-redis"
+    )
 
-	for container in "${containers[@]}"; do
-		if docker ps -a --format '{{.Names}}' | grep -qx "$container"; then
-			print_warning "Removing existing container '$container'..."
-			docker stop "$container" 2>/dev/null || true
-			docker rm "$container" 2>/dev/null || true
-		fi
-	done
+    for container in "${containers[@]}"; do
+        if docker ps -a --format '{{.Names}}' | grep -qx "$container"; then
+            print_warning "Removing existing container '$container'..."
+            docker stop "$container" 2>/dev/null || true
+            docker rm "$container" 2>/dev/null || true
+        fi
+    done
 
-	# Remove containers using port 3000
-	docker ps --format '{{.Names}}\t{{.Ports}}' | awk -F'\t' '$2 ~ /:3000->/ {print $1}' | while read -r c; do
-		[ -n "$c" ] && print_warning "Stopping/removing container using port 3000: $c" && docker stop "$c" 2>/dev/null && docker rm "$c" 2>/dev/null
-	done
+    # Remove containers using port 3000
+    docker ps --format '{{.Names}}\t{{.Ports}}' | awk -F'\t' '$2 ~ /:3000->/ {print $1}' | while read -r c; do
+        [ -n "$c" ] && print_warning "Stopping/removing container using port 3000: $c" && docker stop "$c" 2>/dev/null && docker rm "$c" 2>/dev/null
+    done
 
-	print_status "Container cleanup completed"
+    print_status "Container cleanup completed"
 }
 
 # Help
 show_help() {
-	cat <<EOF
+    cat <<EOF
 WAHA Docker Compose Management Script
 
 Usage: $0 [COMMAND] [OPTIONS]
@@ -92,83 +85,88 @@ EOF
 
 # Main
 case "${1:-help}" in
-	up)
-		cleanup_containers
-		print_status "Starting WAHA services with internal Redis..."
-		docker compose up -d waha-network redis
-		if [ $? -eq 0 ]; then
-			print_status "WAHA started successfully!"
-			print_info "Dashboard: http://localhost:${HOST_PORT:-3000}"
-			print_info "Username: ${WAHA_DASHBOARD_USERNAME:-admin}"
-			print_info "Password: ${WAHA_DASHBOARD_PASSWORD:-admin}"
-		else
-			print_error "Failed to start WAHA services"
-			exit 1
-		fi
-		;;
-	up-host)
-		cleanup_containers
-		print_status "Starting WAHA services with host network (for external Redis)..."
-		docker compose --profile production up -d waha redis
-		if [ $? -eq 0 ]; then
-			print_status "WAHA (Host Network) started successfully!"
-			print_info "Dashboard: http://localhost:${HOST_PORT:-3000}"
-			print_info "Username: ${WAHA_DASHBOARD_USERNAME:-admin}"
-			print_info "Password: ${WAHA_DASHBOARD_PASSWORD:-admin}"
-			print_warning "Make sure external Redis is running on localhost:6379"
-		else
-			print_error "Failed to start WAHA host services"
-			exit 1
-		fi
-		;;
-	up-redis)
-		cleanup_containers
-		print_status "Starting Redis service only..."
-		docker compose up -d redis
-		[ $? -eq 0 ] && print_status "Redis started successfully!" || { print_error "Failed to start Redis service"; exit 1; }
-		;;
-	down)
-		print_status "Stopping WAHA services..."
-		docker compose down
-		print_status "All services stopped"
-		;;
-	restart)
-		print_status "Restarting WAHA services..."
-		docker compose restart
-		print_status "Services restarted"
-		;;
-	logs)
-		shift
-		docker compose logs "$@"
-		;;
-	logs-waha)
-		shift
-		docker compose logs waha "$@"
-		;;
-	logs-redis)
-		shift
-		docker compose logs redis "$@"
-		;;
-	status)
-		print_status "Service status:"
-		docker compose ps
-		;;
-	pull)
-		print_status "Pulling latest images..."
-		docker compose pull
-		;;
-	clean)
-		cleanup_containers
-		print_status "Manual cleanup completed"
-		;;
-	cleanup)
-		print_warning "This will remove only the 'waha' and 'redis' containers, networks, and volumes!"
-		print_status "Cleaning up 'waha' and 'redis' services..."
-		docker compose rm -sfv waha redis
-		docker volume prune -f
-		print_status "Cleanup completed"
-		;;
-	help|*)
-		show_help
-		;;
+    up)
+        cleanup_containers
+        print_status "Starting WAHA services with internal Redis..."
+        docker compose up -d waha-network redis
+        if [ $? -eq 0 ]; then
+            print_status "WAHA started successfully!"
+            print_info "Dashboard: http://localhost:${HOST_PORT:-3000}"
+            print_info "Username: ${WAHA_DASHBOARD_USERNAME:-admin}"
+            print_info "Password: ${WAHA_DASHBOARD_PASSWORD:-admin}"
+        else
+            print_error "Failed to start WAHA services"
+            exit 1
+        fi
+        ;;
+    up-host)
+        cleanup_containers
+        print_status "Starting WAHA services with host network (for external Redis)..."
+        docker compose --profile production up -d waha redis
+        if [ $? -eq 0 ]; then
+            print_status "WAHA (Host Network) started successfully!"
+            print_info "Dashboard: http://localhost:${HOST_PORT:-3000}"
+            print_info "Username: ${WAHA_DASHBOARD_USERNAME:-admin}"
+            print_info "Password: ${WAHA_DASHBOARD_PASSWORD:-admin}"
+            print_warning "Make sure external Redis is running on localhost:6379"
+        else
+            print_error "Failed to start WAHA host services"
+            exit 1
+        fi
+        ;;
+    up-redis)
+        cleanup_containers
+        print_status "Starting Redis service only..."
+        docker compose up -d redis
+        if [ $? -eq 0 ]; then
+            print_status "Redis started successfully!"
+        else
+            print_error "Failed to start Redis service"
+            exit 1
+        fi
+        ;;
+    down)
+        print_status "Stopping WAHA services..."
+        docker compose down
+        print_status "All services stopped"
+        ;;
+    restart)
+        print_status "Restarting WAHA services..."
+        docker compose restart
+        print_status "Services restarted"
+        ;;
+    logs)
+        shift
+        docker compose logs "$@"
+        ;;
+    logs-waha)
+        shift
+        docker compose logs waha "$@"
+        ;;
+    logs-redis)
+        shift
+        docker compose logs redis "$@"
+        ;;
+    status)
+        print_status "Service status:"
+        docker compose ps
+        ;;
+    pull)
+        print_status "Pulling latest images..."
+        docker compose pull
+        ;;
+    clean)
+        cleanup_containers
+        print_status "Manual cleanup completed"
+        ;;
+    cleanup)
+        print_warning "This will remove only the 'waha' and 'redis' containers, networks, and volumes!"
+        print_status "Cleaning up 'waha' and 'redis' services..."
+        docker compose rm -sfv waha redis
+        docker volume prune -f
+        print_status "Cleanup completed"
+        ;;
+    help|*)
+        show_help
+        ;;
 esac
