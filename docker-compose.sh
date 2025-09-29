@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # WAHA Docker Compose Management Script
 # This script manages WAHA using Docker Compose
