@@ -31,27 +31,37 @@ export $(grep -v '^#' .env | grep -v '^$' | xargs)
 cleanup_containers() {
     print_status "Checking for existing containers..."
 
-    local containers=(
-        "${CONTAINER_NAME:-waha}"
-        "${CONTAINER_NAME:-waha}-network"
-        "${CONTAINER_NAME:-waha}-redis"
-    )
+    # Remove specific containers if they exist (no loop, one by one)
+    cname="${CONTAINER_NAME:-waha}"
+    if docker ps -a --format '{{.Names}}' | grep -qx "$cname"; then
+        print_warning "Removing existing container '$cname'..."
+        docker stop "$cname" 2>/dev/null || true
+        docker rm "$cname" 2>/dev/null || true
+    fi
 
-    for container in "${containers[@]}"; do
-        if docker ps -a --format '{{.Names}}' | grep -qx "$container"; then
-            print_warning "Removing existing container '$container'..."
-            docker stop "$container" 2>/dev/null || true
-            docker rm "$container" 2>/dev/null || true
-        fi
-    done
+    cname_network="${CONTAINER_NAME:-waha}-network"
+    if docker ps -a --format '{{.Names}}' | grep -qx "$cname_network"; then
+        print_warning "Removing existing container '$cname_network'..."
+        docker stop "$cname_network" 2>/dev/null || true
+        docker rm "$cname_network" 2>/dev/null || true
+    fi
 
-    # Remove containers using port 3000
-    docker ps --format '{{.Names}}\t{{.Ports}}' | awk -F'\t' '$2 ~ /:3000->/ {print $1}' | while read -r c; do
-        [ -n "$c" ] && print_warning "Stopping/removing container using port 3000: $c" && docker stop "$c" 2>/dev/null && docker rm "$c" 2>/dev/null
-    done
+    cname_redis="${CONTAINER_NAME:-waha}-redis"
+    if docker ps -a --format '{{.Names}}' | grep -qx "$cname_redis"; then
+        print_warning "Removing existing container '$cname_redis'..."
+        docker stop "$cname_redis" 2>/dev/null || true
+        docker rm "$cname_redis" 2>/dev/null || true
+    fi
+
+    # Remove any container using port 3000
+    c=$(docker ps --format '{{.Names}}\t{{.Ports}}' | awk -F'\t' '$2 ~ /:3000->/ {print $1}')
+    if [ -n "$c" ]; then
+        print_warning "Stopping/removing container using port 3000: $c"
+        docker stop "$c" 2>/dev/null || true
+        docker rm "$c" 2>/dev/null || true
+    fi
 
     print_status "Container cleanup completed"
-}
 
 # Help
 show_help() {
