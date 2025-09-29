@@ -68,14 +68,15 @@ echo "Creating new WAHA container... host=${HOST_PORT}"
 
 docker run -d \
   -v "$(pwd)/${SESSIONS_PATH}:/app/.sessions" \
+  -p "${HOST_PORT}:${CONTAINER_PORT}" \
   --name "${CONTAINER_NAME}" \
   -e "WAHA_API_KEY=${WAHA_API_KEY}" \
   -e "WAHA_API_KEY_PLAIN=${WAHA_API_KEY_PLAIN}" \
   -e "WAHA_APPS_ENABLED=${WAHA_APPS_ENABLED}" \
   -e "WAHA_DASHBOARD_USERNAME=${WAHA_DASHBOARD_USERNAME}" \
   -e "WAHA_DASHBOARD_PASSWORD=${WAHA_DASHBOARD_PASSWORD}" \
-  -e "REDIS_URL=${REDIS_URL}" \
   -e "WHATSAPP_DEFAULT_ENGINE=WEBJS" \
+  -e "REDIS_URL=${REDIS_URL}" \
   devlikeapro/waha
 
 if [ $? -eq 0 ]; then
