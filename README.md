@@ -22,9 +22,11 @@
 - 🔄 **Auto-cleanup** - Automatic stop and removal of previous containers
 - 📦 **Auto-update** - Pulls latest image before running
 - 🌐 **Host networking** - Direct network access for better performance
-- 🔒 **Redis integration** - Persistent storage support
+- 🔒 **Redis integration** - Internal or external Redis support
 - 🎯 **WEBJS engine** - Stable WhatsApp Web interface
 - 📊 **Dashboard included** - Web-based management interface
+- 🐙 **Docker Compose** - Modern container orchestration
+- 🔧 **Multiple deployment modes** - Internal Redis or host networking
 
 ## 🛠 Prerequisites
 
@@ -49,10 +51,17 @@
 
 3. **Make scripts executable:**
    ```bash
-   chmod +x run-waha.sh stop-waha.sh run-waha-simple.sh
+   chmod +x run-waha.sh stop-waha.sh run-waha-simple.sh docker-compose.sh
    ```
 
-4. **Run WAHA:**
+4. **Run WAHA (Choose one method):**
+
+   **Method 1: Docker Compose (Recommended)**
+   ```bash
+   ./docker-compose.sh up
+   ```
+
+   **Method 2: Shell Script**
    ```bash
    ./run-waha.sh
    ```
@@ -77,32 +86,63 @@ Create a `.env` file based on `.env.example`:
 | `HOST_PORT` | Port to expose on host | `3000` | ✅ |
 | `CONTAINER_PORT` | Internal container port | `3000` | ✅ |
 | `SESSIONS_PATH` | Path to store session data | `./sessions` | ✅ |
-| `REDIS_URL` | Redis connection URL (optional) | - | ❌ |
+| `REDIS_URL` | Redis connection URL (external Redis) | - | ❌ |
+| `REDIS_PASSWORD` | Redis password (internal Redis) | `defaultpassword` | ❌ |
 
-### Redis Configuration (Optional)
+### Redis Configuration
 
-For persistent storage and scalability, configure Redis:
+**Two Redis Setup Options:**
 
+**Option 1: Internal Redis (Recommended for Docker Compose)**
 ```env
+# Local Redis password for Docker Compose
+REDIS_PASSWORD=your_secure_password_here
+```
+
+**Option 2: External Redis**
+```env
+# External Redis connection
 REDIS_URL=redis://username:password@hostname:port
 ```
 
-Benefits of Redis integration:
+**Benefits of Redis integration:**
 - 📊 Persistent session storage
 - 🔄 Support for multiple WAHA instances
 - ⚡ Improved performance
 - 🛡️ Data reliability
 
+**Setup Modes:**
+- **Docker Compose `up`**: Uses internal Redis container
+- **Docker Compose `up-host`**: Requires external Redis
+- **Shell scripts**: Uses Redis URL from environment
+
 ## 📜 Scripts
 
-### `run-waha.sh` (Main Script)
-Comprehensive script that:
+### `docker-compose.sh` (Recommended Method)
+Modern Docker Compose management script with:
+- ✅ Auto-cleanup of existing containers
+- ✅ Multiple deployment modes (internal/external Redis)
+- ✅ Comprehensive logging and monitoring
+- ✅ Easy service management
+
+**Available Commands:**
+```bash
+./docker-compose.sh up          # Start with internal Redis (recommended)
+./docker-compose.sh up-host     # Start with host network (external Redis)
+./docker-compose.sh up-redis    # Start Redis only
+./docker-compose.sh down        # Stop all services
+./docker-compose.sh clean       # Clean up containers
+./docker-compose.sh logs -f     # Follow logs
+./docker-compose.sh status      # Check status
+```
+
+### `run-waha.sh` (Shell Script Method)
+Traditional shell script that:
 - ✅ Loads configuration from `.env`
 - ✅ Validates required environment variables
 - ✅ Stops and removes existing containers
 - ✅ Pulls latest WAHA image
 - ✅ Creates and runs new container
-- ✅ Provides status feedback
 
 ```bash
 ./run-waha.sh
@@ -126,6 +166,19 @@ Simplified version using `--env-file`:
 
 ### Starting WAHA
 
+**Docker Compose Method (Recommended):**
+```bash
+# Start with internal Redis (easiest setup)
+./docker-compose.sh up
+
+# Start with host networking (better performance, requires external Redis)
+./docker-compose.sh up-host
+
+# Start Redis only (if you want to run WAHA separately)
+./docker-compose.sh up-redis
+```
+
+**Shell Script Method:**
 ```bash
 # Run with main script
 ./run-waha.sh
@@ -136,6 +189,12 @@ Simplified version using `--env-file`:
 
 ### Stopping WAHA
 
+**Docker Compose:**
+```bash
+./docker-compose.sh down
+```
+
+**Shell Script:**
 ```bash
 # Use dedicated stop script
 ./stop-waha.sh
@@ -147,6 +206,19 @@ docker rm waha
 
 ### Viewing Logs
 
+**Docker Compose:**
+```bash
+# All services logs
+./docker-compose.sh logs -f
+
+# WAHA logs only
+./docker-compose.sh logs-waha -f
+
+# Redis logs only
+./docker-compose.sh logs-redis -f
+```
+
+**Direct Docker:**
 ```bash
 # Real-time logs
 docker logs -f waha
@@ -157,6 +229,22 @@ docker logs --tail 100 waha
 
 ### Container Management
 
+**Docker Compose:**
+```bash
+# Check service status
+./docker-compose.sh status
+
+# Restart all services
+./docker-compose.sh restart
+
+# Pull latest images
+./docker-compose.sh pull
+
+# Clean up containers
+./docker-compose.sh clean
+```
+
+**Direct Docker:**
 ```bash
 # Check container status
 docker ps
@@ -217,8 +305,13 @@ curl -X POST "http://localhost:3000/api/sendText" \
 ```bash
 Error: name already in use
 ```
-**Solution:** Run the stop script first
+**Solution:** Use cleanup commands
 ```bash
+# Docker Compose
+./docker-compose.sh clean
+./docker-compose.sh up
+
+# Shell Script
 ./stop-waha.sh
 ./run-waha.sh
 ```
@@ -227,7 +320,10 @@ Error: name already in use
 ```bash
 Error: port is already allocated
 ```
-**Solution:** Change `HOST_PORT` in `.env` or stop the service using port 3000
+**Solution:**
+- Change `HOST_PORT` in `.env`, or
+- Stop service using port 3000, or
+- Use cleanup: `./docker-compose.sh clean`
 
 #### Environment Variables Not Loading
 ```bash
