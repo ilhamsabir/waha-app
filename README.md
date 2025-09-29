@@ -30,10 +30,10 @@
 
 ## 🛠 Prerequisites
 
-- Docker installed and running
+- Docker and Docker Compose installed
 - Git (for cloning the repository)
 - Internet connection (for pulling Docker images)
-- Generate SH12 Key https://waha.devlike.pro/docs/how-to/security/#set-api-key-hash
+- Generate SHA512 Key: https://waha.devlike.pro/docs/how-to/security/#set-api-key-hash
 
 ## 🚀 Quick Start
 
@@ -59,11 +59,6 @@
    **Method 1: Docker Compose (Recommended)**
    ```bash
    ./docker-compose.sh up
-   ```
-
-   **Method 2: Shell Script**
-   ```bash
-   ./run-waha.sh
    ```
 
 5. **Access the dashboard:**
@@ -134,57 +129,6 @@ Modern Docker Compose management script with:
 ./docker-compose.sh clean       # Clean up containers
 ./docker-compose.sh logs -f     # Follow logs
 ./docker-compose.sh status      # Check status
-```
-
-### `run-waha.sh` (Shell Script Method)
-Traditional shell script that:
-- ✅ Loads configuration from `.env`
-- ✅ Validates required environment variables
-- ✅ Stops and removes existing containers
-- ✅ Pulls latest WAHA image
-- ✅ Creates and runs new container
-
-```bash
-./run-waha.sh
-```
-
-### `stop-waha.sh` (Cleanup Script)
-Stops and removes the WAHA container:
-
-```bash
-./stop-waha.sh
-```
-
-### `run-waha-simple.sh` (Alternative Script)
-Simplified version using `--env-file`:
-
-```bash
-./run-waha-simple.sh
-```
-
-## 🔧 Usage
-
-### Starting WAHA
-
-**Docker Compose Method (Recommended):**
-```bash
-# Start with internal Redis (easiest setup)
-./docker-compose.sh up
-
-# Start with host networking (better performance, requires external Redis)
-./docker-compose.sh up-host
-
-# Start Redis only (if you want to run WAHA separately)
-./docker-compose.sh up-redis
-```
-
-**Shell Script Method:**
-```bash
-# Run with main script
-./run-waha.sh
-
-# Or use the simple version
-./run-waha-simple.sh
 ```
 
 ### Stopping WAHA
@@ -336,6 +280,15 @@ Error: Missing required environment variables
 Error: Redis connection failed
 ```
 **Solution:** Verify `REDIS_URL` format and Redis server availability
+
+#### Ubuntu 20 Compatibility Issue
+```bash
+docker-compose.sh: Syntax error: "(" unexpected
+```
+**Solution:** Use bash explicitly:
+```bash
+bash ./docker-compose.sh up
+```
 
 ### Debug Mode
 
