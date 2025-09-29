@@ -43,11 +43,11 @@ else
     echo "Warning: Failed to pull latest image. Using cached version..."
 fi
 
-echo "Creating new WAHA container..."
+echo "Creating new WAHA container... ${HOST_PORT}"
 
 docker run -d \
   -v $(pwd)/${SESSIONS_PATH}:/app/.sessions \
-  -p ${HOST_PORT}:${CONTAINER_PORT} \
+  -p ${HOST_PORT:-3000}:${CONTAINER_PORT:-3000} \
   --name ${CONTAINER_NAME} \
   -e WAHA_API_KEY=${WAHA_API_KEY} \
   -e WAHA_API_KEY_PLAIN=${WAHA_API_KEY_PLAIN} \
