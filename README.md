@@ -31,6 +31,7 @@
 - Docker installed and running
 - Git (for cloning the repository)
 - Internet connection (for pulling Docker images)
+- Generate SH12 Key https://waha.devlike.pro/docs/how-to/security/#set-api-key-hash
 
 ## 🚀 Quick Start
 
